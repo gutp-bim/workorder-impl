@@ -24,6 +24,7 @@ class BookingStatus(StrEnum):
     TENTATIVE = "Tentative"
     CONFIRMED = "Confirmed"
     CANCELLED = "Cancelled"
+    CONFLICTED = "Conflicted"
 
 
 # ── ServiceTask ───────────────────────────────────────────────────────────────

@@ -53,8 +53,8 @@ async def test_complete_task_updates_status(ac):
 
     resp = await ac.patch(f"/work-orders/{wo_id}/tasks/{task_id}/complete")
     assert resp.status_code == 200
-    # WO はまだ OPEN（他のタスクが残っている）
-    assert resp.json()["work_order_status"] == "Open"
+    # 最初のタスク完了で OPEN → IN_PROGRESS（他のタスクが残っているので Completed にはならない）
+    assert resp.json()["work_order_status"] == "InProgress"
 
 
 async def test_all_tasks_complete_closes_wo(ac):

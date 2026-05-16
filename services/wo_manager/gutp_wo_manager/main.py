@@ -31,6 +31,7 @@ from gutp.schemas.ticket import Estimate, Ticket
 from gutp.schemas.workorder import (
     Booking,
     BookingCreate,
+    BookingStatus,
     ServiceTask,
     WorkOrder,
     WorkOrderCreate,
@@ -146,6 +147,10 @@ async def complete_task(wo_id: str, task_id: str) -> WorkOrder:
     task = _tasks.get(task_id)
     if not wo or not task:
         raise HTTPException(404)
+    # WO が未着手なら作業開始として IN_PROGRESS に遷移 (FUN-WO-004)
+    if wo.work_order_status == WorkOrderStatus.OPEN:
+        wo.work_order_status = WorkOrderStatus.IN_PROGRESS
+        wo.started_at = datetime.utcnow()
     task.is_completed = True
     task.completed_at = datetime.utcnow()
     # 全 ServiceTask が完了したら WorkOrder を Completed に自動更新 (FUN-WO-005)
@@ -155,8 +160,34 @@ async def complete_task(wo_id: str, task_id: str) -> WorkOrder:
     return wo
 
 
+def _bookings_overlap(wo_id: str, start: datetime, end: datetime) -> bool:
+    """指定 WO の既存 Booking と時間帯が重複するか判定する。"""
+    for b in _bookings.values():
+        if b.work_order_id != wo_id:
+            continue
+        if start < b.scheduled_end and end > b.scheduled_start:
+            return True
+    return False
+
+
 @app.post("/bookings", status_code=201)
 async def create_booking(body: BookingCreate) -> Booking:
+    if _bookings_overlap(body.work_order_id, body.scheduled_start, body.scheduled_end):
+        raise HTTPException(409, detail="Booking conflict: overlapping time slot for this WorkOrder")
     record = Booking(booking_id=str(uuid.uuid4()), **body.model_dump())
     _bookings[record.booking_id] = record
     return record
+
+
+@app.patch("/bookings/{booking_id}/confirm")
+async def confirm_booking(booking_id: str) -> Booking:
+    """Booking を確定し、対応する WO を IN_PROGRESS に遷移させる (FUN-WO-006)。"""
+    booking = _bookings.get(booking_id)
+    if not booking:
+        raise HTTPException(404, detail="Booking not found")
+    booking.booking_status = BookingStatus.CONFIRMED
+    wo = _work_orders.get(booking.work_order_id)
+    if wo and wo.work_order_status == WorkOrderStatus.OPEN:
+        wo.work_order_status = WorkOrderStatus.IN_PROGRESS
+        wo.started_at = datetime.utcnow()
+    return booking
