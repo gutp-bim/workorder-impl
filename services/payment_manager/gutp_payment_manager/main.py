@@ -46,6 +46,11 @@ async def create_payment(body: PaymentCreate) -> Payment:
     return record
 
 
+@app.get("/payments")
+async def list_payments() -> list[Payment]:
+    return list(_payments.values())
+
+
 @app.get("/payments/{payment_id}")
 async def get_payment(payment_id: str) -> Payment:
     record = _payments.get(payment_id)

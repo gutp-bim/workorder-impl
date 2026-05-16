@@ -69,6 +69,12 @@ async def test_all_tasks_complete_closes_wo(ac):
     assert resp.json()["work_order_status"] == "Completed"
 
 
+async def test_list_work_orders(ac):
+    resp = await ac.get("/work-orders")
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
+
+
 async def test_create_booking(ac):
     create_resp = await ac.post("/work-orders", json={**WO_BODY, "tasks": []})
     wo_id = create_resp.json()["work_order_id"]
