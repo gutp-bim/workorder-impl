@@ -97,8 +97,11 @@ function FlowRow({ flow, selected, onSelect }) {
 
   return (
     <div className={cls}
+         role="button"
+         tabIndex={0}
          aria-selected={selected}
-         onClick={() => onSelect(flow.id)}>
+         onClick={() => onSelect(flow.id)}
+         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(flow.id); } }}>
       <div className="col-priority">
         <PriorityBadge p={flow.priority} />
         <OriginPill origin={flow.origin} />

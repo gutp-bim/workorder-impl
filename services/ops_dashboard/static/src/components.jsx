@@ -77,8 +77,11 @@ function Rail({ active, onChange, counts }) {
 function RailItem({ id, label, icon, badge, active, onChange, problem }) {
   return (
     <div className={"rail-item" + (problem ? " is-problem" : "")}
+         role="button"
+         tabIndex={0}
          aria-current={active === id}
-         onClick={() => onChange(id)}>
+         onClick={() => onChange(id)}
+         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange(id); } }}>
       <Icon name={icon} />
       <span>{label}</span>
       {badge != null && <span className="badge num">{badge}</span>}

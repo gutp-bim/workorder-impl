@@ -8,6 +8,7 @@ CS-OPS-DASHBOARD — 運用管理ダッシュボード BFF (FUN-OPS-001, FUN-OPS
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from collections import defaultdict
 from pathlib import Path
@@ -15,6 +16,8 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
+
+logger = logging.getLogger(__name__)
 
 ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://issue-manager:8000")
 TICKET_MANAGER_URL = os.getenv("TICKET_MANAGER_URL", "http://ticket-manager:8000")
@@ -29,7 +32,7 @@ if _STATIC.exists():
 
 
 async def _fetch_all() -> tuple[list, list, list, list]:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         results = await asyncio.gather(
             client.get(f"{ISSUE_MANAGER_URL}/issues"),
             client.get(f"{TICKET_MANAGER_URL}/tickets"),
@@ -38,12 +41,18 @@ async def _fetch_all() -> tuple[list, list, list, list]:
             return_exceptions=True,
         )
 
-    def _safe(r) -> list:
-        if isinstance(r, Exception) or r.status_code != 200:
+    labels = ("issue-manager", "ticket-manager", "wo-manager", "payment-manager")
+
+    def _safe(r, label: str) -> list:
+        if isinstance(r, Exception):
+            logger.warning("_fetch_all: %s unreachable: %s", label, r)
+            return []
+        if r.status_code != 200:
+            logger.warning("_fetch_all: %s returned HTTP %d", label, r.status_code)
             return []
         return r.json()
 
-    return _safe(results[0]), _safe(results[1]), _safe(results[2]), _safe(results[3])
+    return tuple(_safe(r, svc) for r, svc in zip(results, labels))
 
 
 def _build_flows(issues: list, tickets: list, work_orders: list, payments: list) -> list[dict]:
