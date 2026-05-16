@@ -11,12 +11,12 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from typing import Literal
 
 import nats
 from fastapi import FastAPI, HTTPException
 from gutp.events.subjects import ISSUE, OBS
 from gutp.schemas.issue import Issue, IssueCreate, IssueStatus
-from gutp.schemas.observation import Report
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -28,8 +28,12 @@ _nc: nats.aio.client.Client | None = None
 _issues: dict[str, Issue] = {}
 
 
+class _ReportEvaluatedEvent(BaseModel):
+    report_id: str
+
+
 class ReviewBody(BaseModel):
-    action: str  # "accept" | "reject"
+    action: Literal["accept", "reject"]
 
 
 async def _handle_report_evaluated(report_id: str) -> None:
@@ -46,8 +50,11 @@ async def lifespan(app: FastAPI):
     _nc = await nats.connect(NATS_URL)
 
     async def on_report_evaluated(msg: nats.aio.msg.Msg) -> None:
-        report = Report.model_validate_json(msg.data)
-        await _handle_report_evaluated(report.report_id)
+        try:
+            event = _ReportEvaluatedEvent.model_validate_json(msg.data)
+            await _handle_report_evaluated(event.report_id)
+        except Exception:
+            logger.exception("obs.report.evaluated の処理に失敗 (payload=%s)", msg.data[:200])
 
     await _nc.subscribe(OBS.REPORT_EVALUATED, cb=on_report_evaluated)
     yield
@@ -89,12 +96,12 @@ async def review_issue(issue_id: str, body: ReviewBody) -> Issue:
     record = _issues.get(issue_id)
     if not record:
         raise HTTPException(404, detail="Issue not found")
+    if record.issue_status == IssueStatus.RESOLVED:
+        raise HTTPException(409, detail="Cannot review a Resolved issue")
     if body.action == "accept":
         record.issue_status = IssueStatus.UNDER_REVIEW
-    elif body.action == "reject":
-        record.issue_status = IssueStatus.OPEN
     else:
-        raise HTTPException(400, detail="action must be 'accept' or 'reject'")
+        record.issue_status = IssueStatus.OPEN
     return record
 
 

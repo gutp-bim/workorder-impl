@@ -12,7 +12,7 @@ CS-WO-MANAGER — WorkOrder 管理サービス
 提供: IF-WO-001 (REST CRUD),
       IF-WO-002 (NATS 通知イベント: wo.assigned / wo.emergency.completed, ADR-003)
 購読: IF-TICKET-002 (NATS ticket.estimate.approved) — WO 自動発行トリガー
-備考: FUN-WO-007 / InProgress自動遷移 / Booking conflicted は未実装
+備考: FUN-WO-007 緊急WO即時発行は未実装
 """
 
 from __future__ import annotations
