@@ -63,6 +63,11 @@ async def create_ticket(body: TicketCreate) -> Ticket:
     return record
 
 
+@app.get("/tickets")
+async def list_tickets() -> list[Ticket]:
+    return list(_tickets.values())
+
+
 @app.get("/tickets/{ticket_id}")
 async def get_ticket(ticket_id: str) -> Ticket:
     record = _tickets.get(ticket_id)

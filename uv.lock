@@ -177,16 +177,34 @@ name = "gutp-notify-dispatcher"
 version = "0.1.0"
 source = { virtual = "services/notify_dispatcher" }
 dependencies = [
+    { name = "fastapi" },
     { name = "gutp-shared" },
     { name = "httpx" },
     { name = "nats-py" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "respx" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = ">=0.111" },
     { name = "gutp-shared", editable = "shared" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "nats-py", specifier = ">=2.9" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-asyncio", specifier = ">=0.23" },
+    { name = "respx", specifier = ">=0.21" },
 ]
 
 [[package]]

@@ -158,6 +158,11 @@ async def create_emergency_work_order(body: EmergencyWorkOrderCreate) -> WorkOrd
     return wo
 
 
+@app.get("/work-orders")
+async def list_work_orders() -> list[WorkOrder]:
+    return list(_work_orders.values())
+
+
 @app.get("/work-orders/{wo_id}")
 async def get_work_order(wo_id: str) -> WorkOrder:
     record = _work_orders.get(wo_id)
