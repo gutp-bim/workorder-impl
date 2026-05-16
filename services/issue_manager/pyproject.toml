@@ -1,0 +1,13 @@
+[project]
+name = "gutp-issue-manager"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "nats-py>=2.9",
+    "gutp-shared",
+]
+
+[tool.uv.sources]
+gutp-shared = { workspace = true }

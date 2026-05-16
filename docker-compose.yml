@@ -1,0 +1,149 @@
+name: workorder-impl
+
+services:
+
+  # ── メッセージバス ─────────────────────────────────────────────────
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-c", "/etc/nats/nats-server.conf"]
+    volumes:
+      - ./infra/nats/nats-server.conf:/etc/nats/nats-server.conf:ro
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4222"]
+      interval: 5s
+      retries: 5
+
+  # ── SOI-OBS: 観測・イベント処理 ───────────────────────────────────
+
+  building-registry:
+    build:
+      context: .
+      dockerfile: services/building_registry/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - BUILDING_OS_URL=${BUILDING_OS_URL:-http://localhost:5000}
+      - BUILDING_OS_TOKEN=${BUILDING_OS_TOKEN:-}
+      - BUILDING_SYNC_INTERVAL_SEC=300
+    depends_on:
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
+
+  obs-collector:
+    build:
+      context: .
+      dockerfile: services/obs_collector/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
+
+  obs-analyzer:
+    build:
+      context: .
+      dockerfile: services/obs_analyzer/Dockerfile
+    environment:
+      - NATS_URL=nats://nats:4222
+      - ISSUE_MANAGER_URL=http://issue-manager:8000
+    depends_on:
+      nats:
+        condition: service_healthy
+      obs-collector:
+        condition: service_healthy
+
+  wo-scheduler:
+    build:
+      context: .
+      dockerfile: services/wo_scheduler/Dockerfile
+    environment:
+      - ISSUE_MANAGER_URL=http://issue-manager:8000
+      - TICKET_MANAGER_URL=http://ticket-manager:8000
+      - WO_MANAGER_URL=http://wo-manager:8000
+      - SCHEDULE_INTERVAL_SEC=300
+    depends_on:
+      issue-manager:
+        condition: service_healthy
+
+  # ── SOI-WOM: ワークオーダー管理 ───────────────────────────────────
+
+  issue-manager:
+    build:
+      context: .
+      dockerfile: services/issue_manager/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
+
+  ticket-manager:
+    build:
+      context: .
+      dockerfile: services/ticket_manager/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_healthy
+      issue-manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
+
+  wo-manager:
+    build:
+      context: .
+      dockerfile: services/wo_manager/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      nats:
+        condition: service_healthy
+      ticket-manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
+
+  payment-manager:
+    build:
+      context: .
+      dockerfile: services/payment_manager/Dockerfile
+    ports:
+      - "8005:8000"
+    environment:
+      - WO_MANAGER_URL=http://wo-manager:8000
+    depends_on:
+      wo-manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
