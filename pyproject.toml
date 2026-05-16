@@ -19,6 +19,18 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["services"]
+pythonpath = [
+    "services/wo_manager",
+    "services/issue_manager",
+    "services/obs_analyzer",
+    "services/obs_collector",
+    "services/ticket_manager",
+    "services/notify_dispatcher",
+    "services/ops_dashboard",
+    "services/payment_manager",
+    "services/building_registry",
+    "services/wo_scheduler",
+]
 
 [tool.ruff]
 line-length = 120

@@ -24,6 +24,13 @@ class IssueType(StrEnum):
     OFFICE_SERVICES = "OfficeServices"     # オフィスサービス
 
 
+class IssueStatus(StrEnum):
+    OPEN = "Open"
+    PENDING_REVIEW = "PendingReview"
+    UNDER_REVIEW = "UnderReview"
+    RESOLVED = "Resolved"
+
+
 class IssueCreate(BaseModel):
     """Issue 生成リクエスト（gutp:Issue）。
 
@@ -47,6 +54,7 @@ class IssueCreate(BaseModel):
 class Issue(IssueCreate):
     """永続化済み Issue。"""
     issue_id: str = Field(description="gutp:issueID — システム払出 UUID")
+    issue_status: IssueStatus = Field(IssueStatus.OPEN, description="gutp:issueStatus")
 
 
 class StandardIssue(Issue):
