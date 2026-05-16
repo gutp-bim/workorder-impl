@@ -1,5 +1,5 @@
 """
-CS-BUILDING-REGISTRY — 建物構成レジストリ (FUN-OBS-006)
+CS-BUILDING-REGISTRY — 建物構成レジストリ (FUN-BUILDING-001)
 
 提供: IF-BUILDING-002 — 内部 REST API（Space/Device 一覧照会）
 依存: IF-BUILDING-001 — ビルOS REST API（外部）
@@ -15,13 +15,12 @@ CS-WO-MANAGER 等が ServiceTask の performedAt / performedOn を設定する�
 """
 
 from __future__ import annotations
+
 import asyncio
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-
 from gutp.clients.building_os import BuildingOSClient
 
 from .sync import TopologyRegistry

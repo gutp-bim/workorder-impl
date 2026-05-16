@@ -1,18 +1,21 @@
 """
-CS-OBS-ANALYZER — 観測データ分析・評価ワーカー (FUN-OBS-002, FUN-OBS-004)
+CS-OBS-ANALYZER — 観測データ分析・評価ワーカー
+
+機能: FUN-OBS-002 IoTEvent ルール評価 → Issue 生成判定
+      FUN-OBS-004 Report トレンド分析
+      FUN-OBS-007 未評価Report 滞留エスカレーション（IF-NOTIFY-001 publish, 未実装）
 
 NATS から obs.iot-event.created / obs.report.created を購読し、
 ルールエンジンで評価して Issue 生成が必要な場合は CS-ISSUE-MANAGER (IF-ISSUE-001) を呼ぶ。
 """
 
 from __future__ import annotations
+
 import asyncio
-import json
 import os
 
 import httpx
 import nats
-
 from gutp.events.subjects import OBS
 from gutp.schemas.issue import IssueCreate, IssueType
 from gutp.schemas.observation import IoTEvent, Report
@@ -49,7 +52,7 @@ async def main() -> None:
                 await client.post("/issues", content=issue_data.model_dump_json())
 
         async def on_report(msg: nats.aio.msg.Msg) -> None:
-            report = Report.model_validate_json(msg.data)
+            _report = Report.model_validate_json(msg.data)
             # TODO: トレンド分析ロジック (FUN-OBS-004)
 
         await nc.subscribe(OBS.IOT_EVENT_CREATED, cb=on_iot_event)
