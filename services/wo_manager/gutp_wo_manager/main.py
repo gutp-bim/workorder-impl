@@ -185,6 +185,8 @@ async def confirm_booking(booking_id: str) -> Booking:
     booking = _bookings.get(booking_id)
     if not booking:
         raise HTTPException(404, detail="Booking not found")
+    if booking.booking_status != BookingStatus.TENTATIVE:
+        raise HTTPException(409, detail="Only Tentative bookings can be confirmed")
     booking.booking_status = BookingStatus.CONFIRMED
     wo = _work_orders.get(booking.work_order_id)
     if wo and wo.work_order_status == WorkOrderStatus.OPEN:

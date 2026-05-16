@@ -103,6 +103,8 @@ async def resolve_issue(issue_id: str) -> Issue:
     record = _issues.get(issue_id)
     if not record:
         raise HTTPException(404, detail="Issue not found")
+    if record.issue_status == IssueStatus.RESOLVED:
+        return record
     record.issue_status = IssueStatus.RESOLVED
     if _nc:
         await _nc.publish(ISSUE.RESOLVED, record.model_dump_json().encode())
