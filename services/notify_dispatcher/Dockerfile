@@ -6,4 +6,4 @@ COPY shared/ shared/
 COPY services/notify_dispatcher/ services/notify_dispatcher/
 RUN uv sync --frozen --package gutp-notify-dispatcher
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["python", "-m", "gutp_notify_dispatcher.main"]
+CMD ["uvicorn", "gutp_notify_dispatcher.main:app", "--host", "0.0.0.0", "--port", "8000"]

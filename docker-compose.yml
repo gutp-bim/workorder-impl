@@ -181,11 +181,20 @@ services:
     build:
       context: .
       dockerfile: services/notify_dispatcher/Dockerfile
+    ports:
+      - "8007:8000"
     environment:
       - NATS_URL=nats://nats:4222
       - NOTIFY_ADAPTER=${NOTIFY_ADAPTER:-email}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
     depends_on:
       nats:
         condition: service_healthy
       wo-manager:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/healthz"]
+      interval: 10s
+      retries: 6
