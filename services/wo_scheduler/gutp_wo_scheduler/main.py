@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 from gutp.schemas.issue import IssueType
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +33,16 @@ _schedules: dict[str, ScheduleDef] = {}
 
 class ScheduleCreate(BaseModel):
     title: str
-    interval_days: int
+    interval_days: int = Field(gt=0)
     issue_type: IssueType
     next_trigger_at: datetime
+
+    @field_validator("next_trigger_at")
+    @classmethod
+    def normalize_tz(cls, v: datetime) -> datetime:
+        if v.tzinfo is not None:
+            return v.astimezone(timezone.utc).replace(tzinfo=None)
+        return v
 
 
 class ScheduleDef(ScheduleCreate):
@@ -60,7 +67,10 @@ app = FastAPI(title="CS-WO-SCHEDULER", version="0.1.0", lifespan=lifespan)
 async def _cycle_loop() -> None:
     async with httpx.AsyncClient(timeout=10.0) as client:
         while True:
-            await run_cycle(client)
+            try:
+                await run_cycle(client)
+            except Exception as exc:
+                logger.warning("_cycle_loop: run_cycle raised %s", exc)
             await asyncio.sleep(SCHEDULE_INTERVAL_SEC)
 
 
@@ -132,7 +142,7 @@ async def healthz() -> dict[str, str]:
 
 @app.post("/schedules", status_code=201)
 async def create_schedule(body: ScheduleCreate) -> ScheduleDef:
-    sched = ScheduleDef(schedule_id=f"sched-{uuid.uuid4().hex[:8]}", **body.model_dump())
+    sched = ScheduleDef(schedule_id=f"sched-{uuid.uuid4()}", **body.model_dump())
     _schedules[sched.schedule_id] = sched
     return sched
 
