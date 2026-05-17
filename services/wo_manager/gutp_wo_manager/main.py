@@ -2,17 +2,16 @@
 CS-WO-MANAGER — WorkOrder 管理サービス
 
 機能: FUN-WO-001 WO 自動発行（Estimate承認後）
-      FUN-WO-002 WO 手動発行
+      FUN-WO-002 WO 手動発行（タスクの事後追加を含む）
       FUN-WO-003 WO 参照
       FUN-WO-004 ServiceTask 完了報告
       FUN-WO-005 WO 完了自動遷移（全Task完了）
       FUN-WO-006 Booking 管理
-      FUN-WO-007 緊急WO即時発行（未実装）
+      FUN-WO-007 緊急WO即時発行
 
 提供: IF-WO-001 (REST CRUD),
       IF-WO-002 (NATS 通知イベント: wo.assigned / wo.emergency.completed, ADR-003)
 購読: IF-TICKET-002 (NATS ticket.estimate.approved) — WO 自動発行トリガー
-備考: FUN-WO-007 緊急WO即時発行は未実装
 """
 
 from __future__ import annotations
@@ -34,6 +33,7 @@ from gutp.schemas.workorder import (
     BookingStatus,
     EmergencyWorkOrderCreate,
     ServiceTask,
+    ServiceTaskCreate,
     WorkOrder,
     WorkOrderCreate,
     WorkOrderStatus,
@@ -169,6 +169,20 @@ async def get_work_order(wo_id: str) -> WorkOrder:
     if not record:
         raise HTTPException(404, detail="WorkOrder not found")
     return record
+
+
+@app.post("/work-orders/{wo_id}/tasks", status_code=201)
+async def add_task(wo_id: str, body: ServiceTaskCreate) -> WorkOrder:
+    """WO にタスクを事後追加する (FUN-WO-002 拡張)。Completed WO への追加は拒否する。"""
+    wo = _work_orders.get(wo_id)
+    if not wo:
+        raise HTTPException(404, detail="WorkOrder not found")
+    if wo.work_order_status == WorkOrderStatus.COMPLETED:
+        raise HTTPException(409, detail="Completed WorkOrder にタスクを追加できません")
+    task = ServiceTask(task_id=str(uuid.uuid4()), work_order_id=wo_id, **body.model_dump())
+    _tasks[task.task_id] = task
+    wo.task_ids.append(task.task_id)
+    return wo
 
 
 @app.patch("/work-orders/{wo_id}/tasks/{task_id}/complete")

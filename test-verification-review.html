@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>workorder-impl — テスト・検証・本番化レビュー</title>
+<style>
+  :root{
+    --bg:#0e1016;--surface:#181b24;--surface2:#20242f;--border:#2c3142;
+    --accent:#6c8eff;--accent2:#4fc3f7;--green:#4caf7d;--yellow:#f5c842;
+    --red:#f06060;--purple:#b07cff;--text:#e4e8f2;--muted:#8893aa;
+    --code:#10131b;--radius:8px;--radius-lg:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.65}
+  .layout{display:flex;min-height:100vh}
+  nav{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+  nav .brand{padding:0 20px 16px;font-weight:700;font-size:15px;border-bottom:1px solid var(--border);margin-bottom:12px}
+  nav .brand small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:3px}
+  nav h2{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:14px 20px 6px}
+  nav a{display:block;padding:7px 20px;color:var(--muted);text-decoration:none;font-size:13px;border-left:2px solid transparent;transition:.15s}
+  nav a:hover,nav a.active{color:var(--text);border-left-color:var(--accent);background:rgba(108,142,255,.08)}
+  main{flex:1;max-width:960px;padding:40px 52px}
+  h1{font-size:25px;font-weight:700;margin-bottom:8px}
+  .subtitle{color:var(--muted);font-size:14px;margin-bottom:24px}
+  h2{font-size:19px;font-weight:600;margin:44px 0 16px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  h2 .ico{width:26px;height:26px;border-radius:6px;background:var(--surface2);display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+  h3{font-size:15px;font-weight:600;margin:22px 0 10px}
+  p{margin-bottom:12px}
+  .tag{display:inline-block;background:#222f50;color:#90aaff;border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500}
+  .tag.green{background:rgba(76,175,125,.18);color:#5de0a0}
+  .tag.yellow{background:rgba(245,200,66,.15);color:#f5c842}
+  .tag.red{background:rgba(240,96,96,.15);color:#f06060}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:20px}
+  .metric{text-align:center;padding:18px 12px}
+  .metric .n{font-size:34px;font-weight:700;color:var(--accent)}
+  .metric .n.g{color:var(--green)}.metric .n.y{color:var(--yellow)}.metric .n.r{color:var(--red)}
+  .metric .l{font-size:12px;color:var(--muted);margin-top:5px}
+  .callout{border-radius:var(--radius);padding:14px 18px;margin-bottom:14px;border-left:3px solid}
+  .callout.info{background:rgba(76,195,247,.07);border-color:var(--accent2)}
+  .callout.warn{background:rgba(245,200,66,.07);border-color:var(--yellow)}
+  .callout.ok{background:rgba(76,175,125,.08);border-color:var(--green)}
+  .callout.risk{background:rgba(240,96,96,.07);border-color:var(--red)}
+  .callout b{font-weight:600}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px}
+  th{background:var(--surface2);color:var(--muted);font-weight:600;text-align:left;padding:10px 14px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  code{background:var(--code);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-family:'SF Mono',Menlo,monospace;font-size:12px;color:#90aaff}
+  pre{background:var(--code);border:1px solid var(--border);border-radius:var(--radius);padding:16px;overflow-x:auto;margin-bottom:16px}
+  pre code{background:none;border:none;padding:0;color:#c9d1f0;font-size:12px}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+  .badge::before{content:'';width:7px;height:7px;border-radius:50%;display:inline-block}
+  .badge.pass{background:rgba(76,175,125,.18);color:#5de0a0}.badge.pass::before{background:#5de0a0}
+  .badge.skip{background:rgba(245,200,66,.15);color:#f5c842}.badge.skip::before{background:#f5c842}
+  .badge.gap{background:rgba(240,96,96,.15);color:#f06060}.badge.gap::before{background:#f06060}
+  details{margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  summary{cursor:pointer;color:var(--accent2);font-size:13px;padding:12px 16px;user-select:none;background:var(--surface)}
+  details[open] summary{border-bottom:1px solid var(--border)}
+  details .body{padding:14px 16px}
+  .pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:16px 0}
+  .pyramid .lvl{border-radius:6px;padding:12px 16px;text-align:center;font-size:13px;border:1px solid var(--border)}
+  .pyramid .l1{width:55%;background:rgba(76,175,125,.12);border-color:var(--green);color:#5de0a0}
+  .pyramid .l2{width:75%;background:rgba(108,142,255,.1);border-color:var(--accent);color:#90aaff}
+  .pyramid .l3{width:95%;background:rgba(245,200,66,.08);border-color:var(--yellow);color:#f5c842}
+  .heat{display:grid;grid-template-columns:1fr 70px 70px;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+  .heat>div{background:var(--surface);padding:9px 12px;font-size:12.5px}
+  .heat .h{background:var(--surface2);color:var(--muted);font-weight:600;font-size:10.5px;text-transform:uppercase}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+  .dot.g{background:var(--green)}.dot.y{background:var(--yellow)}.dot.r{background:var(--red)}
+  .flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:14px 0;justify-content:center}
+  .fn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:11.5px;text-align:center}
+  .fn.t{border-color:var(--green);color:#5de0a0;background:rgba(76,175,125,.08)}
+  .fa{color:var(--muted);padding:0 6px;font-size:15px}
+  .foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+  @media(max-width:768px){.layout{flex-direction:column}nav{width:100%;height:auto;position:static}main{padding:24px 20px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">workorder-impl<small>テスト・検証・本番化レビュー</small></div>
+  <h2>セクション</h2>
+  <a href="#summary">エグゼクティブサマリ</a>
+  <a href="#what">① テストで何ができたか</a>
+  <a href="#how">② 検証の方法</a>
+  <a href="#coverage">カバレッジ・ヒートマップ</a>
+  <a href="#gaps">テストの限界</a>
+  <a href="#prod">③ 本番化に必要な追加開発</a>
+  <a href="#decision">判断と推奨</a>
+  <a href="#next">次のアクション</a>
+</nav>
+<main>
+
+  <h1>テスト・検証状態と本番運用に向けた追加開発レビュー</h1>
+  <div class="subtitle">対象: <code>takashikasuya/workorder-impl</code> · Slice 1〜9 完了時点 · 生成日 2026-05-17</div>
+
+  <div class="callout ok" id="summary">
+    <b>エグゼクティブサマリ</b><br>
+    IoTEvent 起点の業務フロー（IoTEvent → Issue → Ticket → WO → Payment）が <b>82 ユニットテスト + 4 E2E シナリオ</b>で検証され、CI 5 ジョブが GREEN。Report 受信は Issue 生成ではなくエスカレーション通知フローに入る（別経路）。
+    機能的な「動作の正しさ」は確立されている。一方、現状は全サービスが<b>インメモリ永続化</b>で、認証・可観測性・耐障害性が未実装の <b>PoC / アーキ検証段階</b>。
+    本番運用には永続化層・認証・冪等性・観測性の追加開発が<b>必須</b>。
+  </div>
+
+  <div class="grid">
+    <div class="card metric"><div class="n g">82</div><div class="l">ユニットテスト (全 PASS)</div></div>
+    <div class="card metric"><div class="n g">4</div><div class="l">E2E シナリオ</div></div>
+    <div class="card metric"><div class="n">9/9</div><div class="l">Slice 実装完了</div></div>
+    <div class="card metric"><div class="n r">10</div><div class="l">本番化の残課題カテゴリ</div></div>
+  </div>
+
+  <!-- ============ ① WHAT ============ -->
+  <h2 id="what"><span class="ico">①</span>テストで何ができたか</h2>
+  <p>テストは「<b>各サービス単体の振る舞い</b>」と「<b>サービス横断の業務連鎖</b>」の 2 層で機能正当性を立証した。</p>
+
+  <h3>達成したこと（事実）</h3>
+  <table>
+    <tr><th>立証された性質</th><th>テスト</th><th>層</th></tr>
+    <tr><td>Estimate 承認で WO が自動生成され <code>wo.assigned</code> が publish される</td><td><code>wo_manager/tests/test_auto_create_wo.py</code></td><td>Unit</td></tr>
+    <tr><td>Booking 時間帯重複が HTTP 409 で拒否される / confirm で WO が IN_PROGRESS へ遷移</td><td><code>wo_manager/tests/test_booking.py</code></td><td>Unit</td></tr>
+    <tr><td>緊急 WO が承認バイパスで即 IN_PROGRESS → complete で COMPLETED</td><td><code>wo_manager/tests/test_emergency_wo.py</code></td><td>Unit</td></tr>
+    <tr><td>IssueStatus 遷移（Open→PendingReview→UnderReview→Resolved）と <code>obs.report.evaluated</code> 購読</td><td><code>issue_manager/tests/test_issue_status.py</code></td><td>Unit</td></tr>
+    <tr><td>未評価 Report が閾値超過でエスカレーション publish される</td><td><code>obs_analyzer/tests/test_escalation.py</code></td><td>Unit</td></tr>
+    <tr><td>通知アダプタ（email/slack/webhook）+ 指数バックオフリトライ + 配信履歴</td><td><code>notify_dispatcher/tests/test_dispatch.py</code></td><td>Unit</td></tr>
+    <tr><td>予防保全スケジュール CRUD + due 評価サイクルでチェーン発行</td><td><code>wo_scheduler/tests/test_{schedules,run_cycle}.py</code></td><td>Unit</td></tr>
+    <tr><td>ダッシュボードの並行集約・問題検出・アクション転送</td><td><code>ops_dashboard/tests/test_ops_{flows,actions}.py</code></td><td>Unit</td></tr>
+    <tr><td><b>IoTEvent 投入 → Issue → Ticket → Estimate → approve → WO の全チェーン</b></td><td><code>tests/e2e/test_iot_to_wo.py</code></td><td>E2E</td></tr>
+    <tr><td><b>Report → Issue 生成 → レビュー遷移</b> / <b>緊急 WO 全状態遷移</b> / <b>スケジューラ自動発行</b></td><td><code>tests/e2e/test_{report_escalation,emergency_wo,scheduler}.py</code></td><td>E2E</td></tr>
+  </table>
+
+  <div class="callout info">
+    <b>テストピラミッドの形</b><br>下に厚い E2E が乗る逆三角ではなく、ユニットが厚く E2E がスモーク的な健全な比率。
+  </div>
+  <div class="pyramid">
+    <div class="lvl l1">E2E ×4 — フルチェーンのスモーク（docker compose）</div>
+    <div class="lvl l2">統合（respx でサービス間 HTTP をモック）</div>
+    <div class="lvl l3">ユニット ×82 — エンドポイント / 状態遷移 / イベント</div>
+  </div>
+
+  <!-- ============ ② HOW ============ -->
+  <h2 id="how"><span class="ico">②</span>検証の方法</h2>
+  <p>4 つの独立した検証メカニズムが、それぞれ異なる失敗モードを捕捉する。</p>
+
+  <div class="card">
+    <table>
+      <tr><th>メカニズム</th><th>技術</th><th>捕捉する失敗</th></tr>
+      <tr><td>インプロセス API テスト</td><td><code>httpx.ASGITransport</code> + pytest-asyncio (auto)</td><td>エンドポイントのロジック・バリデーション・状態遷移バグ</td></tr>
+      <tr><td>上流 HTTP モック</td><td><code>respx</code></td><td>サービス間呼び出しの契約・エラーハンドリング（404/503/conn error）</td></tr>
+      <tr><td>E2E 結合</td><td>docker compose + HTTP ポーリング</td><td>NATS 配線・compose 依存・実プロセス間連鎖の破綻</td></tr>
+      <tr><td>アーキ整合性</td><td><code>scripts/validate_arch_sync.py</code></td><td>実装と <code>systems.yaml</code> 正本のドリフト（CS/FUN/IF 欠落・stale）</td></tr>
+    </table>
+  </div>
+
+  <h3>E2E スクリプトの堅牢性</h3>
+  <div class="flow">
+    <span class="fn">compose up -d</span><span class="fa">→</span>
+    <span class="fn">healthz ポーリング(最大120s)</span><span class="fa">→</span>
+    <span class="fn t">pytest tests/e2e/</span><span class="fa">→</span>
+    <span class="fn">trap EXIT: compose down</span>
+  </div>
+  <div class="callout ok">
+    <b>コンテナリーク対策済み</b> — <code>trap 'docker compose down' EXIT</code> により pytest 非ゼロ終了時も必ずクリーンアップ（Copilot レビュー指摘を反映）。
+  </div>
+
+  <h3>CI による継続検証</h3>
+  <table>
+    <tr><th>ジョブ</th><th>状態</th><th>トリガー</th></tr>
+    <tr><td>Lint &amp; Syntax / Unit Tests / uv workspace / compose validate / arch-sync</td><td><span class="badge pass">success</span></td><td>push / PR</td></tr>
+    <tr><td>E2E Tests</td><td><span class="badge skip">手動のみ</span></td><td><code>workflow_dispatch</code></td></tr>
+  </table>
+  <div class="callout warn">
+    <b>注意</b> — E2E は docker compose を要するため通常 CI に含まれない。push/PR では <b>E2E リグレッションが自動検出されない</b>。マージ前に手動トリガーが必要。
+  </div>
+
+  <!-- ============ COVERAGE HEATMAP ============ -->
+  <h2 id="coverage"><span class="ico">▦</span>カバレッジ・ヒートマップ</h2>
+  <p>サービス別に「ユニット」「E2E」の被覆度を 3 段階（<span class="dot g"></span>厚い / <span class="dot y"></span>薄い / <span class="dot r"></span>無し）で示す。</p>
+  <div class="heat">
+    <div class="h">サービス</div><div class="h">Unit</div><div class="h">E2E</div>
+    <div>wo-manager</div><div><span class="dot g"></span></div><div><span class="dot g"></span></div>
+    <div>issue-manager</div><div><span class="dot g"></span></div><div><span class="dot y"></span></div>
+    <div>wo-scheduler</div><div><span class="dot g"></span></div><div><span class="dot g"></span></div>
+    <div>notify-dispatcher</div><div><span class="dot g"></span></div><div><span class="dot r"></span></div>
+    <div>obs-analyzer</div><div><span class="dot y"></span></div><div><span class="dot y"></span></div>
+    <div>ops-dashboard</div><div><span class="dot g"></span></div><div><span class="dot r"></span></div>
+    <div>ticket-manager</div><div><span class="dot y"></span></div><div><span class="dot y"></span></div>
+    <div>payment-manager</div><div><span class="dot y"></span></div><div><span class="dot r"></span></div>
+    <div>obs-collector</div><div><span class="dot r"></span></div><div><span class="dot y"></span></div>
+    <div>building-registry</div><div><span class="dot r"></span></div><div><span class="dot r"></span></div>
+  </div>
+  <div class="callout warn">
+    <b>被覆の弱点</b> — <code>obs-collector</code>・<code>building-registry</code> はユニットテストが無く、E2E の間接被覆に依存。
+    <code>notify-dispatcher</code> の実際の配信（slack/webhook）は E2E 未検証。
+  </div>
+
+  <!-- ============ GAPS ============ -->
+  <h2 id="gaps"><span class="ico">⚠</span>テストの限界（事実と仮定の区別）</h2>
+  <div class="callout risk">
+    <b>仮定 1: obs-analyzer のルール動作</b> — <code>test_iot_to_wo.py</code> は <code>gutp:SmokeAlarm</code>/<code>event_state=ACTIVE</code> で Issue が生成されることを前提とする。obs-analyzer の評価ロジック（閾値）は E2E 作成時に直接確認しておらず、ルール変更でフレーキー化し得る。
+  </div>
+  <div class="callout risk">
+    <b>仮定 2: 非同期タイミング</b> — Report→Issue の status が <code>Open</code>/<code>PendingReview</code> どちらになるかは NATS 配信タイミング依存。テストは条件分岐で吸収しているが、本質的にフレーキーリスクを内包。
+  </div>
+  <div class="callout warn">
+    <b>未検証領域</b> — 永続化（再起動でデータ消失する前提なので「永続性」自体がテスト対象外）/ 同時実行・競合 / 負荷 / NATS 再配信時の冪等性 / 認証 / 障害注入。
+  </div>
+
+  <!-- ============ ③ PRODUCTION ============ -->
+  <h2 id="prod"><span class="ico">③</span>本番運用に向けた追加開発の必要性</h2>
+  <p>機能正当性は確立済み。本番化のギャップは「<b>非機能要件</b>」に集中する。影響度と緊急度で分類した。</p>
+
+  <table>
+    <tr><th>カテゴリ</th><th>現状</th><th>必要な追加開発</th><th>優先度</th></tr>
+    <tr><td><b>永続化</b></td><td>全サービス インメモリ <code>dict</code></td><td>DB 化（PostgreSQL 等）+ マイグレーション。再起動でデータ消失するため最優先</td><td><span class="tag red">必須</span></td></tr>
+    <tr><td><b>認証 / 認可</b></td><td>全エンドポイント無防備</td><td>OAuth2/JWT、サービス間 mTLS、RBAC</td><td><span class="tag red">必須</span></td></tr>
+    <tr><td><b>冪等性</b></td><td>NATS 再配信の重複対策なし</td><td>イベント ID ベース冪等キー、デデュープ層</td><td><span class="tag red">必須</span></td></tr>
+    <tr><td><b>耐障害性</b></td><td>NATS at-most-once、DLQ 無し</td><td>JetStream（永続化・再配信）、Dead Letter Queue</td><td><span class="tag red">必須</span></td></tr>
+    <tr><td><b>可観測性</b></td><td>ログのみ</td><td>構造化ログ、メトリクス（Prometheus）、分散トレーシング</td><td><span class="tag yellow">高</span></td></tr>
+    <tr><td><b>設定管理</b></td><td>env 変数、obs-analyzer 閾値ハードコード</td><td>設定ストア化、ホットリロード</td><td><span class="tag yellow">高</span></td></tr>
+    <tr><td><b>ビル OS 連携</b></td><td>REST のみ、wo-scheduler の topology 未配線</td><td>gRPC/MQTT コネクタ、<code>performed_at</code> へ Space ID 注入</td><td><span class="tag yellow">中</span></td></tr>
+    <tr><td><b>E2E 自動化</b></td><td>手動トリガーのみ</td><td>docker 対応ランナーで定期実行、フレーキー対策</td><td><span class="tag yellow">中</span></td></tr>
+    <tr><td><b>スケール</b></td><td>単一インスタンス前提</td><td>水平スケール検証（notify は queue group 済）</td><td><span class="tag">低</span></td></tr>
+    <tr><td><b>スキーマ進化</b></td><td>OWL タイポを実装側で吸収</td><td>オントロジー上流修正 + 契約テスト</td><td><span class="tag">低</span></td></tr>
+  </table>
+
+  <details>
+    <summary>なぜ「永続化」が最優先なのか — 派生する設計判断</summary>
+    <div class="body">
+      <p>インメモリ <code>dict</code> から DB へ移行すると、以下が連鎖的に必要になる:</p>
+      <ul style="margin-left:18px">
+        <li>トランザクション境界の設計（Issue→Ticket→WO は分散トランザクション or Saga）</li>
+        <li>イベント発行と DB コミットの整合（Outbox パターンが有力）</li>
+        <li>冪等性（再配信時に DB 制約で重複を弾く設計）</li>
+        <li>マイグレーション運用（Alembic 等）</li>
+      </ul>
+      <p>永続化の設計判断が冪等性・耐障害性のアーキを規定するため、本番化の出発点。</p>
+    </div>
+  </details>
+
+  <!-- ============ DECISION ============ -->
+  <h2 id="decision"><span class="ico">◆</span>判断と推奨</h2>
+  <div class="card">
+    <table>
+      <tr><th>問い</th><th>回答</th></tr>
+      <tr><td>機能は正しく動くか？</td><td><b>はい</b> — 82 ユニット + 4 E2E で業務連鎖を立証済み</td></tr>
+      <tr><td>このまま本番投入できるか？</td><td><b>いいえ</b> — 永続化・認証・冪等性が無く、再起動でデータ消失・無防備</td></tr>
+      <tr><td>アーキ検証の目的は達したか？</td><td><b>はい</b> — SoS の連鎖設計と疎結合が実装で実証された</td></tr>
+      <tr><td>次に何をすべきか？</td><td>永続化層の設計 → 冪等性 → 認証 の順で非機能を積み上げる</td></tr>
+    </table>
+  </div>
+  <div class="callout info">
+    <b>推奨</b> — 本実装は「アーキ検証 PoC として完成」と位置づけ、本番化フェーズを別マイルストーンとして切り出す。
+    まず「永続化＋冪等性」を 1 サービス（例: wo-manager）で縦に貫通させ、パターンを確立してから横展開するのが安全。
+  </div>
+
+  <!-- ============ NEXT ============ -->
+  <h2 id="next"><span class="ico">→</span>次のアクション</h2>
+  <div class="card">
+    <table>
+      <tr><th>アクション</th><th>優先</th><th>根拠</th></tr>
+      <tr><td>obs-analyzer の評価ルールを確認し E2E のイベント前提を確定</td><td><span class="tag red">高</span></td><td>E2E フレーキーリスクの除去（仮定 1）</td></tr>
+      <tr><td>obs-collector / building-registry にユニットテスト追加</td><td><span class="tag yellow">中</span></td><td>カバレッジ空白の解消</td></tr>
+      <tr><td>永続化 PoC（wo-manager を DB 化、Outbox パターン検証）</td><td><span class="tag red">高</span></td><td>本番化の出発点・パターン確立</td></tr>
+      <tr><td>E2E を docker 対応ランナーで定期実行</td><td><span class="tag yellow">中</span></td><td>push/PR で E2E リグレッションを自動検出</td></tr>
+      <tr><td>認証レイヤ（JWT）の横断設計</td><td><span class="tag yellow">中</span></td><td>本番投入の必須前提</td></tr>
+    </table>
+  </div>
+
+  <div class="foot">
+    Generated by html-review skill (technical-explainer + decision-brief) ·
+    根拠: services/*/tests/, tests/e2e/, .github/workflows/ci.yml, scripts/validate_arch_sync.py, README.md ·
+    事実=コード/テストから直接確認 / 仮定=明示的に区別
+  </div>
+
+</main>
+</div>
+<script>
+const links = document.querySelectorAll('nav a');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+document.querySelectorAll('main [id]').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

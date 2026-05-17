@@ -32,6 +32,8 @@ function Icon({ name, size = 14 }) {
     case "arrow":    return <svg {...common}><path d="M5 12h14M13 6l6 6-6 6"/></svg>;
     case "moon":     return <svg {...common}><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>;
     case "sun":      return <svg {...common}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>;
+    case "plus":     return <svg {...common}><path d="M12 5v14M5 12h14"/></svg>;
+    case "wrench":   return <svg {...common}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>;
     default: return null;
   }
 }
@@ -56,6 +58,10 @@ function Rail({ active, onChange, counts }) {
       <RailItem id="problems" label="問題キュー" icon="alert" badge={counts.problems}
                 active={active} onChange={onChange} problem />
       <RailItem id="reports"  label="Report 評価" icon="queue" badge={counts.reportQueue}
+                active={active} onChange={onChange} />
+
+      <div className="rail-section">操作</div>
+      <RailItem id="tasks" label="タスク登録" icon="wrench"
                 active={active} onChange={onChange} />
 
       <div className="rail-section">設定</div>

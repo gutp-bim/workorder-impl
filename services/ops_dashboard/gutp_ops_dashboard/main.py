@@ -16,6 +16,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
+from gutp.schemas.workorder import ServiceTaskCreate
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,36 @@ async def list_problems() -> dict:
     issues, tickets, wos, payments = await _fetch_all()
     flows = _build_flows(issues, tickets, wos, payments)
     return {"problems": [f for f in flows if f["problem_flags"]]}
+
+
+@app.get("/ops/work-orders")
+async def list_work_orders_proxy() -> list:
+    """WO 一覧を wo-manager から転送する（タスク登録 UI 向け）。"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{WO_MANAGER_URL}/work-orders")
+    except httpx.RequestError as exc:
+        raise HTTPException(502, detail=f"wo-manager への接続に失敗しました: {exc}")
+    if resp.status_code != 200:
+        raise HTTPException(resp.status_code, detail=resp.text)
+    return resp.json()
+
+
+@app.post("/ops/work-orders/{wo_id}/tasks", status_code=201)
+async def add_task_proxy(wo_id: str, body: ServiceTaskCreate) -> dict:
+    """タスク追加を wo-manager へ転送する（タスク登録 UI 向け）。"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                f"{WO_MANAGER_URL}/work-orders/{wo_id}/tasks",
+                content=body.model_dump_json(),
+                headers={"Content-Type": "application/json"},
+            )
+    except httpx.RequestError as exc:
+        raise HTTPException(502, detail=f"wo-manager への接続に失敗しました: {exc}")
+    if resp.status_code not in (200, 201):
+        raise HTTPException(resp.status_code, detail=resp.text)
+    return resp.json()
 
 
 @app.post("/ops/actions")

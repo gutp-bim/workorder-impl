@@ -85,11 +85,12 @@ function App() {
 
   /* Scope label for breadcrumb */
   const scope =
-    nav === "problems" ? "問題キュー" :
-    nav === "reports"  ? "Report 評価キュー" :
+    nav === "problems"  ? "問題キュー" :
+    nav === "reports"   ? "Report 評価キュー" :
     nav === "schedules" ? "予防保全スケジュール" :
     nav === "settings"  ? "設定" :
     nav === "overview"  ? "Overview" :
+    nav === "tasks"     ? "タスク登録" :
                           "業務フロー";
 
   return (
@@ -106,7 +107,13 @@ function App() {
                      theme={theme}
                      onToggleTheme={onToggleTheme} />
 
-      <main className="main">
+      {nav === "tasks" && (
+        <main className="main">
+          <window.TaskPanel />
+        </main>
+      )}
+
+      {nav !== "tasks" && <main className="main">
         <div className="page-header">
           <div className="page-title">
             <h1>業務フロー監視</h1>
@@ -152,7 +159,7 @@ function App() {
             )
           )}
         </div>
-      </main>
+      </main>}
 
       <window.DetailDrawer flow={selectedFlow}
                            open={drawerOpen}

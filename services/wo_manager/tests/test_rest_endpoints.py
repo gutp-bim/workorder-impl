@@ -75,6 +75,37 @@ async def test_list_work_orders(ac):
     assert isinstance(resp.json(), list)
 
 
+async def test_add_task_to_work_order(ac):
+    create_resp = await ac.post("/work-orders", json={**WO_BODY, "tasks": []})
+    wo_id = create_resp.json()["work_order_id"]
+
+    task_body = {"title": "追加タスク", "description": "事後追加の作業"}
+    resp = await ac.post(f"/work-orders/{wo_id}/tasks", json=task_body)
+    assert resp.status_code == 201
+    data = resp.json()
+    assert len(data["task_ids"]) == 1
+
+
+async def test_add_task_not_found(ac):
+    resp = await ac.post("/work-orders/nonexistent/tasks", json={"title": "x"})
+    assert resp.status_code == 404
+
+
+async def test_add_task_to_completed_wo_rejected(ac):
+    body = {**WO_BODY, "tasks": [{"title": "唯一のタスク", "description": None}]}
+    create_resp = await ac.post("/work-orders", json=body)
+    data = create_resp.json()
+    wo_id = data["work_order_id"]
+    task_id = data["task_ids"][0]
+
+    # WO を Completed に遷移させる
+    await ac.patch(f"/work-orders/{wo_id}/tasks/{task_id}/complete")
+
+    # Completed WO へのタスク追加は 409
+    resp = await ac.post(f"/work-orders/{wo_id}/tasks", json={"title": "追加不可タスク"})
+    assert resp.status_code == 409
+
+
 async def test_create_booking(ac):
     create_resp = await ac.post("/work-orders", json={**WO_BODY, "tasks": []})
     wo_id = create_resp.json()["work_order_id"]
