@@ -6,4 +6,4 @@ COPY shared/ shared/
 COPY services/wo_scheduler/ services/wo_scheduler/
 RUN uv sync --frozen --package gutp-wo-scheduler
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["python", "-m", "gutp_wo_scheduler.main"]
+CMD ["uvicorn", "gutp_wo_scheduler.main:app", "--host", "0.0.0.0", "--port", "8000"]
