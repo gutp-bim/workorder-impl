@@ -5,10 +5,12 @@
 
 from __future__ import annotations
 
+import os
+
 import httpx
 import pytest
 
-from tests.e2e.conftest import WO_MANAGER_URL
+WO_MANAGER_URL = os.getenv("WO_MANAGER_URL", "http://localhost:8004")
 
 
 @pytest.mark.anyio

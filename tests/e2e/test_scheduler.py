@@ -14,7 +14,8 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
-from tests.e2e.conftest import ISSUE_MANAGER_URL, WO_SCHEDULER_URL
+ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://localhost:8002")
+WO_SCHEDULER_URL = os.getenv("WO_SCHEDULER_URL", "http://localhost:8008")
 
 _SCHEDULE_INTERVAL = int(os.getenv("SCHEDULE_INTERVAL_SEC", "300"))
 _POLL_INTERVAL = 0.5

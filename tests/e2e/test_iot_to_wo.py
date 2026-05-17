@@ -6,17 +6,16 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from datetime import datetime, timezone
 
 import httpx
 import pytest
 
-from tests.e2e.conftest import (
-    ISSUE_MANAGER_URL,
-    OBS_COLLECTOR_URL,
-    TICKET_MANAGER_URL,
-    WO_MANAGER_URL,
-)
+ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://localhost:8002")
+OBS_COLLECTOR_URL = os.getenv("OBS_COLLECTOR_URL", "http://localhost:8001")
+TICKET_MANAGER_URL = os.getenv("TICKET_MANAGER_URL", "http://localhost:8003")
+WO_MANAGER_URL = os.getenv("WO_MANAGER_URL", "http://localhost:8004")
 
 _POLL_INTERVAL = 0.5
 _POLL_TIMEOUT = 15.0

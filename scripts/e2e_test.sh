@@ -8,12 +8,14 @@ set -euo pipefail
 SCHEDULE_INTERVAL_SEC=${SCHEDULE_INTERVAL_SEC:-5}
 export SCHEDULE_INTERVAL_SEC
 
+# テスト失敗時も含め、EXIT 時に必ずコンテナをクリーンアップする
+trap 'echo "==> Stopping services..."; docker compose down' EXIT
+
 echo "==> Starting services (SCHEDULE_INTERVAL_SEC=${SCHEDULE_INTERVAL_SEC})"
 SCHEDULE_INTERVAL_SEC="${SCHEDULE_INTERVAL_SEC}" docker compose up -d
 
 echo "==> Waiting for all services to be healthy (up to 120s)..."
 for i in $(seq 1 24); do
-    # unhealthy なサービス数をカウント
     unhealthy=$(docker compose ps --format json 2>/dev/null \
         | python3 -c "
 import sys, json
@@ -27,7 +29,6 @@ for line in lines:
 print(sum(1 for s in services if s.get('Health') == 'unhealthy'))
 " 2>/dev/null || echo 0)
 
-    # 全サービスが起動済みかつ unhealthy がゼロなら抜ける
     running=$(docker compose ps --format json 2>/dev/null \
         | python3 -c "
 import sys, json
@@ -51,9 +52,3 @@ done
 
 echo "==> Running E2E tests..."
 uv run pytest tests/e2e/ -v --tb=short
-EXIT_CODE=$?
-
-echo "==> Stopping services..."
-docker compose down
-
-exit $EXIT_CODE
