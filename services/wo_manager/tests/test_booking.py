@@ -95,3 +95,10 @@ async def test_confirm_booking_status_in_response(ac):
     booking_id = booking_resp.json()["booking_id"]
     confirmed = await ac.patch(f"/bookings/{booking_id}/confirm")
     assert confirmed.json()["booking_status"] == "Confirmed"
+
+
+def test_booking_status_conflicted_exists():
+    """BookingStatus.CONFLICTED が schema に存在することを確認する。"""
+    from gutp.schemas.workorder import BookingStatus
+
+    assert BookingStatus.CONFLICTED == "Conflicted"
