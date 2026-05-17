@@ -33,12 +33,12 @@
 中核となる業務連鎖は次のとおりです。
 
 ```
-IoTEvent / Report  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder  →  Payment
+IoTEvent  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder  →  Payment
 ```
 
 各 CS は FastAPI による HTTP API と NATS による非同期イベントで疎結合に連携し、
-予防保全スケジュール・緊急 WO・未評価 Report エスカレーション・運用ダッシュボード（BFF）
-といった周辺機能も含めて、業務フロー全体を自動化します。
+予防保全スケジュール・緊急 WO・未評価 Report エスカレーション（Issue 生成ではなく通知へ直送）・
+運用ダッシュボード（BFF）といった周辺機能も含めて、業務フロー全体を自動化します。
 
 ---
 
@@ -99,7 +99,7 @@ IoTEvent / Report  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder 
 |---|---|---|---|---|---|
 | **building-registry** | CS-BUILDING-REGISTRY | 8000 | API+batch | ビル OS トポロジ同期・参照 | `GET /topology/{buildings,spaces,devices}`, `POST /topology/sync` |
 | **obs-collector** | CS-OBS-COLLECTOR | 8001 | API | IoT / 報告 受信（コネクタ） | `POST /ingest/iot-event`, `POST /ingest/report` → publish `obs.*.created` |
-| **obs-analyzer** | CS-OBS-ANALYZER | — | worker | ルール評価・未評価 Report エスカレーション | sub `obs.*.created` → HTTP `POST /issues` / publish `obs.report.escalation` |
+| **obs-analyzer** | CS-OBS-ANALYZER | — | worker | ルール評価・未評価 Report エスカレーション | sub `obs.iot-event.created` → HTTP `POST /issues`；sub `obs.report.created` → pending 登録 → publish `obs.report.escalation` |
 | **issue-manager** | CS-ISSUE-MANAGER | 8002 | API | Issue ライフサイクル | `POST/GET /issues`, `PATCH /issues/{id}/{review,resolve}` / pub `issue.*` |
 | **ticket-manager** | CS-TICKET-MANAGER | 8003 | API | Ticket / Estimate 管理 | `POST /tickets`, `POST /estimates`, `PATCH /estimates/{id}/approve` |
 | **wo-manager** | CS-WO-MANAGER | 8004 | API | WO 自動/手動発行・タスク・予約 | sub `ticket.estimate.approved` → 自動 WO / `POST /work-orders/emergency` |
@@ -108,7 +108,8 @@ IoTEvent / Report  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder 
 | **notify-dispatcher** | CS-NOTIFY-DISPATCHER | 8007 | worker | 通知配信（プラガブルアダプタ） | sub `wo.assigned`/`wo.emergency.completed`/`obs.report.escalation` |
 | **wo-scheduler** | CS-WO-SCHEDULER | 8008 | API+batch | 予防保全スケジュール評価 | `POST/GET/DELETE /schedules` → 周期で Issue→Ticket→Estimate 自動発行 |
 
-> 全サービスは `GET /healthz` を提供し、docker-compose の healthcheck で監視されます。
+> HTTP API を持つサービスは `GET /healthz` を提供し、docker-compose の healthcheck で監視されます。
+> obs-analyzer は worker プロセスのためポート公開・healthcheck なし。
 > ポートは「ホスト公開ポート」。コンテナ内部はすべて `:8000` です。
 
 ### 主な環境変数
@@ -167,8 +168,8 @@ sequenceDiagram
 
 | サブジェクト | publisher | subscriber | 対応 IF |
 |---|---|---|---|
-| `obs.iot-event.created` | obs-collector | obs-analyzer | IF-OBS-001 |
-| `obs.report.created` | obs-collector | obs-analyzer | IF-OBS-002 |
+| `obs.iot-event.created` | obs-collector | obs-analyzer | IF-OBS-003 |
+| `obs.report.created` | obs-collector | obs-analyzer | IF-OBS-003 |
 | `obs.report.evaluated` | (FM 評価系) | obs-analyzer, issue-manager | IF-OBS-003 |
 | `obs.report.escalation` | obs-analyzer | notify-dispatcher | IF-NOTIFY-001 |
 | `issue.created` | issue-manager | ticket-manager | IF-ISSUE-002 |

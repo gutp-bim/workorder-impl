@@ -99,7 +99,7 @@
 
   <div class="callout ok" id="summary">
     <b>エグゼクティブサマリ</b><br>
-    業務フロー全体（IoT/Report → Issue → Ticket → WO → Payment）が <b>73 ユニットテスト + 4 E2E シナリオ</b>で検証され、CI 5 ジョブが GREEN。
+    IoTEvent 起点の業務フロー（IoTEvent → Issue → Ticket → WO → Payment）が <b>73 ユニットテスト + 4 E2E シナリオ</b>で検証され、CI 5 ジョブが GREEN。Report 受信は Issue 生成ではなくエスカレーション通知フローに入る（別経路）。
     機能的な「動作の正しさ」は確立されている。一方、現状は全サービスが<b>インメモリ永続化</b>で、認証・可観測性・耐障害性が未実装の <b>PoC / アーキ検証段階</b>。
     本番運用には永続化層・認証・冪等性・観測性の追加開発が<b>必須</b>。
   </div>
