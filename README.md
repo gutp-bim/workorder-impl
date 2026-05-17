@@ -16,12 +16,13 @@
 - [7. リポジトリ構成](#7-リポジトリ構成)
 - [8. 技術スタック](#8-技術スタック)
 - [9. クイックスタート](#9-クイックスタート)
-- [10. テスト](#10-テスト)
-- [11. アーキテクチャガバナンス](#11-アーキテクチャガバナンス)
-- [12. コネクタ拡張](#12-コネクタ拡張)
-- [13. 実装状況](#13-実装状況)
-- [14. 本番運用に向けた残課題](#14-本番運用に向けた残課題)
-- [15. OWL スキーマ対応メモ](#15-owl-スキーマ対応メモ)
+- [10. 詳細ドキュメント](#10-詳細ドキュメント)
+- [11. テスト](#11-テスト)
+- [12. アーキテクチャガバナンス](#12-アーキテクチャガバナンス)
+- [13. コネクタ拡張](#13-コネクタ拡張)
+- [14. 実装状況](#14-実装状況)
+- [15. 本番運用に向けた残課題](#15-本番運用に向けた残課題)
+- [16. OWL スキーマ対応メモ](#16-owl-スキーマ対応メモ)
 
 ---
 
@@ -54,7 +55,7 @@ IoTEvent  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder  →  Pay
 
 > **正本は `workorder-systems`**。CS / 機能要件 (FUN-*) / インターフェース要件 (IF-*) /
 > アーキ決定 (ADR-*) はすべて `systems.yaml` で定義され、本リポジトリはそれに追従します。
-> ドリフトは CI の `arch-sync` ジョブで検出されます（[§11](#11-アーキテクチャガバナンス)）。
+> ドリフトは CI の `arch-sync` ジョブで検出されます（[§12](#12-アーキテクチャガバナンス)）。
 
 ---
 
@@ -121,9 +122,13 @@ IoTEvent  →  Issue  →  Ticket → Estimate(承認)  →  WorkOrder  →  Pay
 | `TICKET_MANAGER_URL` | `http://ticket-manager:8000` | wo-manager, wo-scheduler, ops-dashboard |
 | `WO_MANAGER_URL` | `http://wo-manager:8000` | payment-manager, ops-dashboard |
 | `ESCALATION_THRESHOLD_SEC` | `1800` | obs-analyzer（未評価 Report エスカレーション閾値） |
+| `ESCALATION_CHECK_INTERVAL_SEC` | `60` | obs-analyzer（未評価 Report のスキャン間隔） |
 | `SCHEDULE_INTERVAL_SEC` | `300` | wo-scheduler（スケジュール評価サイクル） |
 | `NOTIFY_ADAPTER` | `email` | notify-dispatcher（`email`/`slack`/`webhook`） |
+| `SLACK_WEBHOOK_URL` / `WEBHOOK_URL` | — | notify-dispatcher（外部通知先） |
 | `BUILDING_OS_URL` / `BUILDING_OS_TOKEN` | `http://localhost:5000` / — | building-registry |
+
+完全な設定一覧と、Compose に存在するが現時点では未使用の変数は [docs/configuration.md](docs/configuration.md) を参照してください。
 
 ---
 
@@ -203,6 +208,7 @@ workorder-impl/
 │   └── ops_dashboard/  notify_dispatcher/  wo_scheduler/
 │        └── 各 <service>/{gutp_<name>/main.py, tests/, Dockerfile, pyproject.toml}
 ├── tests/e2e/                      # E2E 結合テスト（docker compose 前提）
+├── docs/                           # API / フロー / 設定 / 運用ドキュメント
 ├── scripts/
 │   ├── validate_arch_sync.py       # systems.yaml との整合性検証
 │   └── e2e_test.sh                 # docker compose up → pytest → down
@@ -227,7 +233,7 @@ workorder-impl/
 | Lint | ruff（line-length 120, rules E/F/I） |
 | テスト | pytest / pytest-asyncio / anyio[trio] / respx（HTTP モック） |
 | コンテナ | Docker Compose（healthcheck 付き） |
-| 永続化 | **インメモリ dict**（本番は DB 化が必要 — [§14](#14-本番運用に向けた残課題)） |
+| 永続化 | **インメモリ dict**（本番は DB 化が必要 — [§15](#15-本番運用に向けた残課題)） |
 
 ---
 
@@ -290,7 +296,20 @@ curl -X POST http://localhost:8008/schedules \
 
 ---
 
-## 10. テスト
+## 10. 詳細ドキュメント
+
+README は全体像と最短手順に絞っています。詳細は次のドキュメントを参照してください。
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/api.md](docs/api.md) | サービス別 HTTP API、OpenAPI 参照先、主な副作用 |
+| [docs/flows.md](docs/flows.md) | IoT / Report / 予防保全 / 緊急 WO の業務フロー、状態遷移、NATS サブジェクト |
+| [docs/configuration.md](docs/configuration.md) | 環境変数、Compose 設定、現時点で未使用の設定値 |
+| [docs/operations.md](docs/operations.md) | 起動停止、ヘルスチェック、ログ確認、障害時の切り分け |
+
+---
+
+## 11. テスト
 
 ### ユニットテスト（73 件）
 
@@ -323,7 +342,7 @@ bash scripts/e2e_test.sh         # compose up → ヘルス待機 → pytest tes
 | テスト | 検証フロー |
 |---|---|
 | `test_iot_to_wo.py` | IoTEvent → Issue → Ticket → Estimate → approve → WO |
-| `test_report_escalation.py` | Report → Issue 生成 → レビュー遷移 |
+| `test_report_escalation.py` | Report 関連フロー（現行設計では pending 登録 / 評価 / エスカレーションを [docs/flows.md](docs/flows.md) に整理） |
 | `test_emergency_wo.py` | 緊急 WO 発行（IN_PROGRESS）→ 完了（COMPLETED） |
 | `test_scheduler.py` | スケジュール登録 → サイクル評価 → Issue 生成 |
 
@@ -332,7 +351,7 @@ bash scripts/e2e_test.sh         # compose up → ヘルス待機 → pytest tes
 
 ---
 
-## 11. アーキテクチャガバナンス
+## 12. アーキテクチャガバナンス
 
 `workorder-impl` は `workorder-systems/systems.yaml`（正本）に追従します。
 `scripts/validate_arch_sync.py` が次の 4 点を検証します。
@@ -361,7 +380,7 @@ python scripts/validate_arch_sync.py --systems-dir ../workorder-systems --impl-d
 
 ---
 
-## 12. コネクタ拡張
+## 13. コネクタ拡張
 
 ビル OS 接続プロトコルの追加は `shared/gutp/connectors/` に新ディレクトリを作り、
 `Connector` Protocol を実装して `obs_collector` の `lifespan` に登録するだけです。
@@ -377,7 +396,7 @@ _registry.register(GrpcConnector(on_event=handle_ingress, port=50051))
 
 ---
 
-## 13. 実装状況
+## 14. 実装状況
 
 業務フロー全体（Slice 1〜9）が実装・テスト済みです。
 
@@ -395,7 +414,7 @@ _registry.register(GrpcConnector(on_event=handle_ingress, port=50051))
 
 ---
 
-## 14. 本番運用に向けた残課題
+## 15. 本番運用に向けた残課題
 
 現状は **PoC / アーキ検証段階** です。本番運用には以下が必要です。
 
@@ -406,7 +425,7 @@ _registry.register(GrpcConnector(on_event=handle_ingress, port=50051))
 | **認証 / 認可** | なし（全エンドポイント無防備） | OAuth2/JWT、サービス間 mTLS、RBAC |
 | **可観測性** | ログのみ | 構造化ログ、メトリクス（Prometheus）、分散トレーシング |
 | **耐障害性** | NATS at-most-once、DLQ なし | JetStream（永続化・再配信）、Dead Letter Queue |
-| **設定管理** | env 変数（obs-analyzer の閾値はハードコード） | 設定ストア化、ホットリロード |
+| **設定管理** | env 変数（スキーマ化・集中管理なし） | 設定ストア化、ホットリロード |
 | **スケール** | 単一インスタンス前提 | NATS queue group の活用済（notify）、水平スケール検証 |
 | **ビル OS 連携** | REST コネクタのみ、トポロジ連携は wo-scheduler 未配線 | gRPC/MQTT コネクタ、`performed_at` への Space ID 注入 |
 | **E2E 自動化** | 手動トリガー | docker 対応ランナーでの定期実行、フレーキー対策 |
@@ -414,7 +433,7 @@ _registry.register(GrpcConnector(on_event=handle_ingress, port=50051))
 
 ---
 
-## 15. OWL スキーマ対応メモ
+## 16. OWL スキーマ対応メモ
 
 `workorder-ontologies` の OWL 定義にあるバグ・タイポを Pydantic 側で正規化しています。
 
@@ -426,5 +445,5 @@ _registry.register(GrpcConnector(on_event=handle_ingress, port=50051))
 | `payment.applies_to_work_order_id` | `gutp:appliesTo` | OWL range が rec:Agent はバグ → WorkOrder |
 | `report_confidence: int` | `gutp:reportConfidence (xsd:string)` | コメント「確信度」より int が正 |
 
-> これらは [§14](#14-本番運用に向けた残課題) の「スキーマ進化」として、
+> これらは [§15](#15-本番運用に向けた残課題) の「スキーマ進化」として、
 > 本来は `workorder-ontologies` 側の修正と契約テストで担保すべき項目です。
