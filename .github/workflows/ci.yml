@@ -4,6 +4,7 @@ on:
   push:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   # ── ① Lint & 構文チェック ──────────────────────────────────────────
@@ -135,3 +136,25 @@ jobs:
           uv run python scripts/validate_arch_sync.py \
             --systems-dir workorder-systems \
             --impl-dir .
+
+  # ── ⑥ E2E テスト（手動トリガーのみ） ─────────────────────────────
+  #
+  # `gh workflow run ci.yml` または GitHub Actions UI から手動実行する。
+  # docker compose で全サービスを起動した上で pytest tests/e2e/ を実行する。
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dev deps
+        run: uv sync --frozen --group dev --all-packages
+
+      - name: Run E2E tests
+        run: bash scripts/e2e_test.sh
