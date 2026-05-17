@@ -73,6 +73,8 @@ services:
     build:
       context: .
       dockerfile: services/wo_scheduler/Dockerfile
+    ports:
+      - "8008:8000"
     environment:
       - ISSUE_MANAGER_URL=http://issue-manager:8000
       - TICKET_MANAGER_URL=http://ticket-manager:8000
@@ -82,6 +84,11 @@ services:
     depends_on:
       issue-manager:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   issue-manager:
     build:
