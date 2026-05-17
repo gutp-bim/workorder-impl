@@ -141,6 +141,29 @@ async def list_problems() -> dict:
     return {"problems": [f for f in flows if f["problem_flags"]]}
 
 
+@app.get("/ops/work-orders")
+async def list_work_orders_proxy() -> list:
+    """WO 一覧を wo-manager から転送する（タスク登録 UI 向け）。"""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(f"{WO_MANAGER_URL}/work-orders")
+    if resp.status_code != 200:
+        raise HTTPException(resp.status_code, detail="wo-manager error")
+    return resp.json()
+
+
+@app.post("/ops/work-orders/{wo_id}/tasks", status_code=201)
+async def add_task_proxy(wo_id: str, body: dict) -> dict:
+    """タスク追加を wo-manager へ転送する（タスク登録 UI 向け）。"""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(
+            f"{WO_MANAGER_URL}/work-orders/{wo_id}/tasks",
+            json=body,
+        )
+    if resp.status_code not in (200, 201):
+        raise HTTPException(resp.status_code, detail=resp.text)
+    return resp.json()
+
+
 @app.post("/ops/actions")
 async def post_action(action: dict) -> dict:
     """FUN-OPS-003 — 管理操作を対応 CS の API へ転送する。"""
