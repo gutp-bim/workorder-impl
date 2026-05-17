@@ -191,11 +191,11 @@ ok "Payment 登録: id=${PAYMENT_ID}"
 # ── Step 11: Ops Dashboard フロー確認 ────────────────────────────────────────
 step "11. Ops Dashboard フロー確認 → ops-dashboard GET /ops/flows"
 FLOWS=$(curl_get "${OPS_DASHBOARD}/ops/flows")
-FLOW_COUNT=$(echo "${FLOWS}" | jq 'length')
+FLOW_COUNT=$(echo "${FLOWS}" | jq '.flows | length')
 ok "集約フロー件数: ${FLOW_COUNT}"
 
 FLOW=$(echo "${FLOWS}" | jq --arg wid "${WO_ID}" \
-    '.[] | select(.work_order != null and .work_order.work_order_id == $wid)' 2>/dev/null \
+    '.flows[] | select(.work_orders != null and (.work_orders[] | .work_order_id == $wid))' 2>/dev/null \
     | head -c 1000 || true)
 if [ -n "${FLOW}" ]; then
     PROBLEMS=$(echo "${FLOW}" | jq -r '.problem_flags | length' 2>/dev/null || echo "?")

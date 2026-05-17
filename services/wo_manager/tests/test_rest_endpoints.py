@@ -91,6 +91,21 @@ async def test_add_task_not_found(ac):
     assert resp.status_code == 404
 
 
+async def test_add_task_to_completed_wo_rejected(ac):
+    body = {**WO_BODY, "tasks": [{"title": "唯一のタスク", "description": None}]}
+    create_resp = await ac.post("/work-orders", json=body)
+    data = create_resp.json()
+    wo_id = data["work_order_id"]
+    task_id = data["task_ids"][0]
+
+    # WO を Completed に遷移させる
+    await ac.patch(f"/work-orders/{wo_id}/tasks/{task_id}/complete")
+
+    # Completed WO へのタスク追加は 409
+    resp = await ac.post(f"/work-orders/{wo_id}/tasks", json={"title": "追加不可タスク"})
+    assert resp.status_code == 409
+
+
 async def test_create_booking(ac):
     create_resp = await ac.post("/work-orders", json={**WO_BODY, "tasks": []})
     wo_id = create_resp.json()["work_order_id"]

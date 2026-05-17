@@ -99,13 +99,13 @@
 
   <div class="callout ok" id="summary">
     <b>エグゼクティブサマリ</b><br>
-    IoTEvent 起点の業務フロー（IoTEvent → Issue → Ticket → WO → Payment）が <b>73 ユニットテスト + 4 E2E シナリオ</b>で検証され、CI 5 ジョブが GREEN。Report 受信は Issue 生成ではなくエスカレーション通知フローに入る（別経路）。
+    IoTEvent 起点の業務フロー（IoTEvent → Issue → Ticket → WO → Payment）が <b>82 ユニットテスト + 4 E2E シナリオ</b>で検証され、CI 5 ジョブが GREEN。Report 受信は Issue 生成ではなくエスカレーション通知フローに入る（別経路）。
     機能的な「動作の正しさ」は確立されている。一方、現状は全サービスが<b>インメモリ永続化</b>で、認証・可観測性・耐障害性が未実装の <b>PoC / アーキ検証段階</b>。
     本番運用には永続化層・認証・冪等性・観測性の追加開発が<b>必須</b>。
   </div>
 
   <div class="grid">
-    <div class="card metric"><div class="n g">73</div><div class="l">ユニットテスト (全 PASS)</div></div>
+    <div class="card metric"><div class="n g">82</div><div class="l">ユニットテスト (全 PASS)</div></div>
     <div class="card metric"><div class="n g">4</div><div class="l">E2E シナリオ</div></div>
     <div class="card metric"><div class="n">9/9</div><div class="l">Slice 実装完了</div></div>
     <div class="card metric"><div class="n r">10</div><div class="l">本番化の残課題カテゴリ</div></div>
@@ -136,7 +136,7 @@
   <div class="pyramid">
     <div class="lvl l1">E2E ×4 — フルチェーンのスモーク（docker compose）</div>
     <div class="lvl l2">統合（respx でサービス間 HTTP をモック）</div>
-    <div class="lvl l3">ユニット ×73 — エンドポイント / 状態遷移 / イベント</div>
+    <div class="lvl l3">ユニット ×82 — エンドポイント / 状態遷移 / イベント</div>
   </div>
 
   <!-- ============ ② HOW ============ -->
@@ -244,7 +244,7 @@
   <div class="card">
     <table>
       <tr><th>問い</th><th>回答</th></tr>
-      <tr><td>機能は正しく動くか？</td><td><b>はい</b> — 73 ユニット + 4 E2E で業務連鎖を立証済み</td></tr>
+      <tr><td>機能は正しく動くか？</td><td><b>はい</b> — 82 ユニット + 4 E2E で業務連鎖を立証済み</td></tr>
       <tr><td>このまま本番投入できるか？</td><td><b>いいえ</b> — 永続化・認証・冪等性が無く、再起動でデータ消失・無防備</td></tr>
       <tr><td>アーキ検証の目的は達したか？</td><td><b>はい</b> — SoS の連鎖設計と疎結合が実装で実証された</td></tr>
       <tr><td>次に何をすべきか？</td><td>永続化層の設計 → 冪等性 → 認証 の順で非機能を積み上げる</td></tr>
