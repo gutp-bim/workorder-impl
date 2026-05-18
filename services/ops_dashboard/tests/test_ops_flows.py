@@ -5,10 +5,10 @@ from __future__ import annotations
 import httpx
 import respx
 
-_ISSUE_URL = "http://issue-manager:8000/issues"
-_TICKET_URL = "http://ticket-manager:8000/tickets"
-_WO_URL = "http://wo-manager:8000/work-orders"
-_PAY_URL = "http://payment-manager:8000/payments"
+_ISSUE_URL = "http://backend:8000/issues"
+_TICKET_URL = "http://backend:8000/tickets"
+_WO_URL = "http://backend:8000/work-orders"
+_PAY_URL = "http://backend:8000/payments"
 
 _ISSUE = {
     "issue_id": "i-001",

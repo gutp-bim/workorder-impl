@@ -5,8 +5,8 @@ from __future__ import annotations
 import httpx
 import respx
 
-_WO_LIST_URL = "http://wo-manager:8000/work-orders"
-_WO_TASK_URL = "http://wo-manager:8000/work-orders/wo-001/tasks"
+_WO_LIST_URL = "http://backend:8000/work-orders"
+_WO_TASK_URL = "http://backend:8000/work-orders/wo-001/tasks"
 
 _WO = {
     "work_order_id": "wo-001",

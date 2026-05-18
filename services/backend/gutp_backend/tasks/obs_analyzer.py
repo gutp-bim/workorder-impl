@@ -37,9 +37,23 @@ async def handle_iot_event(event: IoTEvent) -> None:
 
 
 async def handle_report_created(report: Report) -> None:
-    """obs.report.created — Report を pending キューに登録する (FUN-OBS-007)."""
+    """obs.report.created — Report を評価して高信頼度なら Issue を生成、pending キューに登録する (FUN-OBS-004/007)."""
     state.pending_reports[report.report_id] = (report, datetime.utcnow())
     logger.info("pending report registered: %s", report.report_id)
+
+    if (report.report_confidence or 0) >= 70:
+        from gutp.schemas.issue import Issue
+        record = Issue(
+            issue_id=str(uuid.uuid4()),
+            title=f"[報告] {report.title}",
+            issue_type=IssueType.FACILITY_ASSET,
+            derived_from_id=report.report_id,
+            derived_from_type="Report",
+            description=report.report_comment,
+            is_standard=False,
+        )
+        state.issues[record.issue_id] = record
+        logger.info("issue created from Report: %s (confidence=%s)", record.issue_id, report.report_confidence)
 
 
 async def handle_report_evaluated(report_id: str) -> None:

@@ -10,7 +10,7 @@ import os
 import httpx
 import pytest
 
-WO_MANAGER_URL = os.getenv("WO_MANAGER_URL", "http://localhost:8004")
+WO_MANAGER_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 
 @pytest.mark.anyio

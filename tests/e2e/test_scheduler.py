@@ -14,8 +14,8 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
-ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://localhost:8002")
-WO_SCHEDULER_URL = os.getenv("WO_SCHEDULER_URL", "http://localhost:8008")
+ISSUE_MANAGER_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+WO_SCHEDULER_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 _SCHEDULE_INTERVAL = int(os.getenv("SCHEDULE_INTERVAL_SEC", "300"))
 _POLL_INTERVAL = 0.5
