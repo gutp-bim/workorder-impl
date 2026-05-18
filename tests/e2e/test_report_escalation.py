@@ -11,8 +11,8 @@ import os
 import httpx
 import pytest
 
-ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://localhost:8002")
-OBS_COLLECTOR_URL = os.getenv("OBS_COLLECTOR_URL", "http://localhost:8001")
+ISSUE_MANAGER_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+OBS_COLLECTOR_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 _POLL_INTERVAL = 0.5
 _POLL_TIMEOUT = 15.0

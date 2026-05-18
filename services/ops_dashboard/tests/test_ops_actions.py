@@ -8,7 +8,7 @@ import respx
 
 @respx.mock
 async def test_action_resolve_issue(ac):
-    respx.patch("http://issue-manager:8000/issues/i-001/resolve").mock(
+    respx.patch("http://backend:8000/issues/i-001/resolve").mock(
         return_value=httpx.Response(200, json={"ok": True})
     )
     resp = await ac.post("/ops/actions", json={
@@ -19,7 +19,7 @@ async def test_action_resolve_issue(ac):
     assert resp.status_code == 200
     data = resp.json()
     assert data["accepted"] is True
-    assert "issue-manager" in data["forwardedTo"]
+    assert "backend" in data["forwardedTo"]
     assert "i-001" in data["forwardedTo"]
 
 
