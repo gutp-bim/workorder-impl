@@ -20,10 +20,11 @@ from gutp.schemas.workorder import ServiceTaskCreate
 
 logger = logging.getLogger(__name__)
 
-ISSUE_MANAGER_URL = os.getenv("ISSUE_MANAGER_URL", "http://issue-manager:8000")
-TICKET_MANAGER_URL = os.getenv("TICKET_MANAGER_URL", "http://ticket-manager:8000")
-WO_MANAGER_URL = os.getenv("WO_MANAGER_URL", "http://wo-manager:8000")
-PAYMENT_MANAGER_URL = os.getenv("PAYMENT_MANAGER_URL", "http://payment-manager:8000")
+_BACKEND = os.getenv("BACKEND_URL", "http://backend:8000")
+ISSUE_MANAGER_URL = _BACKEND
+TICKET_MANAGER_URL = _BACKEND
+WO_MANAGER_URL = _BACKEND
+PAYMENT_MANAGER_URL = _BACKEND
 
 app = FastAPI(title="CS-OPS-DASHBOARD", version="0.1.0")
 

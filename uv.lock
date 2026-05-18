@@ -4,6 +4,7 @@ requires-python = ">=3.12"
 
 [manifest]
 members = [
+    "gutp-backend",
     "gutp-building-registry",
     "gutp-issue-manager",
     "gutp-notify-dispatcher",
@@ -133,9 +134,30 @@ wheels = [
 ]
 
 [[package]]
+name = "gutp-backend"
+version = "0.1.0"
+source = { editable = "services/backend" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "gutp-shared" },
+    { name = "httpx" },
+    { name = "nats-py" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115" },
+    { name = "gutp-shared", editable = "shared" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "nats-py", specifier = ">=2.9" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
+]
+
+[[package]]
 name = "gutp-building-registry"
 version = "0.1.0"
-source = { virtual = "services/building_registry" }
+source = { editable = "services/building_registry" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -156,7 +178,7 @@ requires-dist = [
 [[package]]
 name = "gutp-issue-manager"
 version = "0.1.0"
-source = { virtual = "services/issue_manager" }
+source = { editable = "services/issue_manager" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -175,7 +197,7 @@ requires-dist = [
 [[package]]
 name = "gutp-notify-dispatcher"
 version = "0.1.0"
-source = { virtual = "services/notify_dispatcher" }
+source = { editable = "services/notify_dispatcher" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -210,7 +232,7 @@ dev = [
 [[package]]
 name = "gutp-obs-analyzer"
 version = "0.1.0"
-source = { virtual = "services/obs_analyzer" }
+source = { editable = "services/obs_analyzer" }
 dependencies = [
     { name = "gutp-shared" },
     { name = "httpx" },
@@ -227,7 +249,7 @@ requires-dist = [
 [[package]]
 name = "gutp-obs-collector"
 version = "0.1.0"
-source = { virtual = "services/obs_collector" }
+source = { editable = "services/obs_collector" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -246,7 +268,7 @@ requires-dist = [
 [[package]]
 name = "gutp-ops-dashboard"
 version = "0.1.0"
-source = { virtual = "services/ops_dashboard" }
+source = { editable = "services/ops_dashboard" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -265,7 +287,7 @@ requires-dist = [
 [[package]]
 name = "gutp-payment-manager"
 version = "0.1.0"
-source = { virtual = "services/payment_manager" }
+source = { editable = "services/payment_manager" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -301,7 +323,7 @@ requires-dist = [
 [[package]]
 name = "gutp-ticket-manager"
 version = "0.1.0"
-source = { virtual = "services/ticket_manager" }
+source = { editable = "services/ticket_manager" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -320,7 +342,7 @@ requires-dist = [
 [[package]]
 name = "gutp-wo-manager"
 version = "0.1.0"
-source = { virtual = "services/wo_manager" }
+source = { editable = "services/wo_manager" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
@@ -341,7 +363,7 @@ requires-dist = [
 [[package]]
 name = "gutp-wo-scheduler"
 version = "0.1.0"
-source = { virtual = "services/wo_scheduler" }
+source = { editable = "services/wo_scheduler" }
 dependencies = [
     { name = "fastapi" },
     { name = "gutp-shared" },
