@@ -111,6 +111,7 @@ iot_events: dict[str, IoTEvent] = {}
 reports: dict[str, Report] = {}
 pending_reports: dict[str, tuple[Report, datetime]] = {}
 
+schedules: dict = {}
 issues: dict[str, Issue] = {}
 tickets: dict[str, Ticket] = {}
 estimates: dict[str, Estimate] = {}

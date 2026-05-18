@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 
 from gutp.events.subjects import OBS
-from gutp.schemas.issue import IssueCreate, IssueStatus, IssueType
+from gutp.schemas.issue import IssueStatus, IssueType
 from gutp.schemas.observation import IoTEvent, Report
 
 from .. import state

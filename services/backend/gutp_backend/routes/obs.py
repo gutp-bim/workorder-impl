@@ -55,3 +55,10 @@ async def get_report(report_id: str) -> Report:
     if not record:
         raise HTTPException(404, detail="Report not found")
     return record
+
+
+@router.post("/reports/{report_id}/evaluate", status_code=204)
+async def evaluate_report(report_id: str) -> None:
+    """obs.report.evaluated — 評価済みとしてマークし pending キューから除去する (FUN-OBS-007)."""
+    from ..tasks.obs_analyzer import handle_report_evaluated
+    await handle_report_evaluated(report_id)
