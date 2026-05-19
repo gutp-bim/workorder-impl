@@ -8,9 +8,9 @@ from fastapi import APIRouter, HTTPException
 from gutp.schemas.issue import IssueType
 from pydantic import BaseModel, Field, field_validator
 
-router = APIRouter(tags=["schedules"])
+from .. import state
 
-_schedules: dict[str, "ScheduleDef"] = {}
+router = APIRouter(tags=["schedules"])
 
 
 class ScheduleCreate(BaseModel):
@@ -35,17 +35,17 @@ class ScheduleDef(ScheduleCreate):
 @router.post("/schedules", status_code=201)
 async def create_schedule(body: ScheduleCreate) -> ScheduleDef:
     sched = ScheduleDef(schedule_id=f"sched-{uuid.uuid4()}", **body.model_dump())
-    _schedules[sched.schedule_id] = sched
+    state.schedules[sched.schedule_id] = sched
     return sched
 
 
 @router.get("/schedules")
 async def list_schedules() -> list[ScheduleDef]:
-    return list(_schedules.values())
+    return list(state.schedules.values())
 
 
 @router.delete("/schedules/{schedule_id}", status_code=204)
 async def delete_schedule(schedule_id: str) -> None:
-    if schedule_id not in _schedules:
+    if schedule_id not in state.schedules:
         raise HTTPException(404, detail="Schedule not found")
-    del _schedules[schedule_id]
+    del state.schedules[schedule_id]

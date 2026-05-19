@@ -19,15 +19,13 @@ SCHEDULE_INTERVAL_SEC = int(os.getenv("SCHEDULE_INTERVAL_SEC", "300"))
 
 async def run_cycle() -> None:
     """due なスケジュールを評価し Issue→Ticket→Estimate チェーンを発行する (FUN-SCHEDULE-001)."""
-    from ..routes.schedules import _schedules, ScheduleDef
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    due = [s for s in _schedules.values() if s.next_trigger_at <= now]
+    due = [s for s in state.schedules.values() if s.next_trigger_at <= now]
     for sched in due:
         await _trigger(sched, now)
 
 
 async def _trigger(sched, now: datetime) -> None:
-    from ..routes.schedules import _schedules
 
     issue = Issue(
         issue_id=str(uuid.uuid4()),

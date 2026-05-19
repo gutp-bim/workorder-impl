@@ -20,11 +20,7 @@ from gutp.schemas.workorder import ServiceTaskCreate
 
 logger = logging.getLogger(__name__)
 
-_BACKEND = os.getenv("BACKEND_URL", "http://backend:8000")
-ISSUE_MANAGER_URL = _BACKEND
-TICKET_MANAGER_URL = _BACKEND
-WO_MANAGER_URL = _BACKEND
-PAYMENT_MANAGER_URL = _BACKEND
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
 
 app = FastAPI(title="CS-OPS-DASHBOARD", version="0.1.0")
 
@@ -36,14 +32,14 @@ if _STATIC.exists():
 async def _fetch_all() -> tuple[list, list, list, list]:
     async with httpx.AsyncClient(timeout=10.0) as client:
         results = await asyncio.gather(
-            client.get(f"{ISSUE_MANAGER_URL}/issues"),
-            client.get(f"{TICKET_MANAGER_URL}/tickets"),
-            client.get(f"{WO_MANAGER_URL}/work-orders"),
-            client.get(f"{PAYMENT_MANAGER_URL}/payments"),
+            client.get(f"{BACKEND_URL}/issues"),
+            client.get(f"{BACKEND_URL}/tickets"),
+            client.get(f"{BACKEND_URL}/work-orders"),
+            client.get(f"{BACKEND_URL}/payments"),
             return_exceptions=True,
         )
 
-    labels = ("issue-manager", "ticket-manager", "wo-manager", "payment-manager")
+    labels = ("/issues", "/tickets", "/work-orders", "/payments")
 
     def _safe(r, label: str) -> list:
         if isinstance(r, Exception):
@@ -148,7 +144,7 @@ async def list_work_orders_proxy() -> list:
     """WO 一覧を wo-manager から転送する（タスク登録 UI 向け）。"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(f"{WO_MANAGER_URL}/work-orders")
+            resp = await client.get(f"{BACKEND_URL}/work-orders")
     except httpx.RequestError as exc:
         raise HTTPException(502, detail=f"wo-manager への接続に失敗しました: {exc}")
     if resp.status_code != 200:
@@ -162,7 +158,7 @@ async def add_task_proxy(wo_id: str, body: ServiceTaskCreate) -> dict:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
-                f"{WO_MANAGER_URL}/work-orders/{wo_id}/tasks",
+                f"{BACKEND_URL}/work-orders/{wo_id}/tasks",
                 content=body.model_dump_json(),
                 headers={"Content-Type": "application/json"},
             )
@@ -181,11 +177,11 @@ async def post_action(action: dict) -> dict:
     act = action.get("action")
 
     if target_type == "issue":
-        url = f"{ISSUE_MANAGER_URL}/issues/{target_id}/{act}"
+        url = f"{BACKEND_URL}/issues/{target_id}/{act}"
     elif target_type == "workorder":
-        url = f"{WO_MANAGER_URL}/work-orders/{target_id}/{act}"
+        url = f"{BACKEND_URL}/work-orders/{target_id}/{act}"
     elif target_type == "ticket":
-        url = f"{TICKET_MANAGER_URL}/tickets/{target_id}/{act}"
+        url = f"{BACKEND_URL}/tickets/{target_id}/{act}"
     else:
         raise HTTPException(400, detail=f"Unknown targetType: {target_type}")
 
